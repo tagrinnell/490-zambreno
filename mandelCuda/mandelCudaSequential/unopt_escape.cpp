@@ -1,23 +1,8 @@
 /*
-
-    Author: Tasman Grinnell 
-
-    Unoptimized mandelbrot set calculation.  
-
-    Pseudocode:
-    for each pixel (Px, Py) on the screen do
-        xx := 0.0
-        y := 0.0
-        iteration := 0
-        max_iteration := 1000
-        while (x*x + y*y ≤ 2*2 AND iteration < max_iteration) do
-            xtemp := x*x - y*y + x0
-            y := 2*x*y + y0
-            x := xtemp
-            iteration := iteration + 1
-    
-    color := palette[iteration]
-    plot(Px, Py, color)
+** Mandelbrot Set calculation algorithm using unoptimized escape loop/conditions.
+**
+** Author: Tasman Grinnell 
+**
 */
 
 // Initial Testing: 1280x720 points
