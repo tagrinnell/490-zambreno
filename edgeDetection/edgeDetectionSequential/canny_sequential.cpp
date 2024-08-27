@@ -23,7 +23,7 @@ void cannyEdgeDetection (int filterSize) {
 
     // Steps for Algorithm
     // open image
-    std::ifstream operatingImage("..\\exampleImages\\numbat.jpeg");
+    std::ifstream ifs("..\\exampleImages\\numbat.jpeg");
     // grayscale image
 
     // Noise reduction (Gaussian blur/filter)
