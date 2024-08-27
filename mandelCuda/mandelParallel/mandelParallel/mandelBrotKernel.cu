@@ -1,4 +1,14 @@
-﻿#include "cuda_runtime.h"
+﻿/*
+**
+** Parallelized implementation of Unoptimized Algorithm to generate the Mandelbrot Set.
+** Written and tested on the CUDA 12.4 Toolkit
+**
+** Author: Tasman Grinnell
+**
+**/
+
+
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
