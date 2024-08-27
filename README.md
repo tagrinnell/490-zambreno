@@ -1,5 +1,5 @@
 # 490-zambreno
-ISU CPR E 490 Independent Study with Dr. Joseph Zambreno, focusing on GPU and CUDA Programming topics
+Iowa State University Computer Engineering 490 Independent Study with Dr. Joseph Zambreno, focusing on GPU and CUDA Programming topics
 
 ## Project Sublistings
 
