@@ -17,7 +17,7 @@ void grayscale ();
 double* gaussianKernel (int matSize);
 
 int main () {
-
+    std::cout << "Beginning run" << std::endl;
     cannyEdgeDetection(5);
     return 0;
 }
@@ -26,6 +26,14 @@ void cannyEdgeDetection (int filterSize) {
 
     // Steps for Algorithm
     // open image
+    corona::Image* image = corona::OpenImage("C:\\Users\\Devil\\Desktop\\Random Docs\\490-zambreno\\edgeDetection\\exampleImages\\numbat.jpeg", corona::PF_R8G8B8);
+
+    if (!image) {
+        std::cout << "Oopsies whoopsies a fucky wucky occured" << std::endl;
+    }
+
+    int width = image -> getWidth();
+    int height = image -> getHeight();
     // grayscale image
 
     // Noise reduction (Gaussian blur/filter)
