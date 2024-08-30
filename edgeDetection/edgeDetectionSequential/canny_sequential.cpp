@@ -9,6 +9,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <corona.h>
 // If need to do a bunch of matrix math, consider using eigen
 
 void cannyEdgeDetection (int filterSize);
@@ -16,6 +17,8 @@ void grayscale ();
 double* gaussianKernel (int matSize);
 
 int main () {
+
+    cannyEdgeDetection(5);
     return 0;
 }
 
@@ -23,7 +26,6 @@ void cannyEdgeDetection (int filterSize) {
 
     // Steps for Algorithm
     // open image
-    std::ifstream ifs("..\\exampleImages\\numbat.jpeg");
     // grayscale image
 
     // Noise reduction (Gaussian blur/filter)
