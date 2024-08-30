@@ -18,4 +18,5 @@
 **/*.lib
 **/*.txt
 **/*.opendb
+**/*.json
 /mandelParallel/mandelParallel.sln
