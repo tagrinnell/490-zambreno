@@ -9,6 +9,8 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+// Shit still brokey
+// look at this:             https://stackoverflow.com/questions/35898433/how-to-compile-code-using-external-dll-library
 #include <corona.h>
 // If need to do a bunch of matrix math, consider using eigen
 
