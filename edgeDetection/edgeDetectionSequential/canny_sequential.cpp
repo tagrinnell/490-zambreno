@@ -11,7 +11,7 @@
 #include <cmath>
 // Shit still brokey
 // look at this:             https://stackoverflow.com/questions/35898433/how-to-compile-code-using-external-dll-library
-#include "../../externalLibraries/corona-1.0.2-vc7/include/corona.h"
+#include "../corona-1.0.2-vc7/include/corona.h"
 // If need to do a bunch of matrix math, consider using eigen
 
 void cannyEdgeDetection (int filterSize);

@@ -18,6 +18,10 @@
 **/*.txt
 **/*.opendb
 **/*.json
+**/*.vcxproj**
 **/.vscode/**
+**/.vs/**
+**/CMakeFiles/**
+**/*.cmake
 /mandelParallel/mandelParallel.sln
 !CMakeLists.txt
