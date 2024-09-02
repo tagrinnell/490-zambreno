@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 def main() :
     # Process input
     # Laptop
-    csv = pandas.read_csv("C:\\Users\\Devil\\Desktop\\Random Docs\\CudaProgramming\\mandelCuda\\CSVOutputs\\MandelSetOut_Parallel.csv")
+    #csv = pandas.read_csv("C:\\Users\\Devil\\Desktop\\Random Docs\\CudaProgramming\\mandelCuda\\CSVOutputs\\MandelSetOut_Parallel.csv")
     
     # PC
     # csv = pandas.read_csv("C:\\Users\\tasma\\Desktop\\Textbooks\\mandelCuda\\CSVOutputs\\MandelSetOut_Parallel.csv")
+    csv = pandas.read_csv("C:\\Users\\tasma\\Desktop\\Textbooks\\490-zambreno\\mandelCuda\\mandelCudaSequential\\MandelSetOut.csv")
     # csv = pandas.read_csv("C:\\Users\\tasma\\Desktop\\Textbooks\\mandelCuda\\CSVOutputs\\MandelSetOut.csv")
 
     plot = seaborn.scatterplot(data=csv, x='X', y='Y', hue='Iteration', linewidth=0, legend=False)
