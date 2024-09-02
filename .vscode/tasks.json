@@ -9,7 +9,13 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-I",
+                "${workspaceFolder}\\externalLibraries\\corona-1.0.2-vc7\\include",  
+                "-l",
+                "${workspaceFolder}\\externalLibraries\\corona-1.0.2-vc7\\lib\\corona.lib"  
+                // "-l",
+                // "corona.dll"
             ],
             "options": {
                 "cwd": "${fileDirname}"

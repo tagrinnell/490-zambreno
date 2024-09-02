@@ -15,9 +15,9 @@
 **/*.tlog
 **/*.lastbuildstate
 **/*.exp
-**/*.lib
 **/*.txt
 **/*.opendb
 **/*.json
 **/.vscode/**
 /mandelParallel/mandelParallel.sln
+!CMakeLists.txt
