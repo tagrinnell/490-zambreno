@@ -104,13 +104,18 @@ int main()
     struct Point *pointArray = new struct Point[X * Y];
 
     std::cout << "Beginning Calculation" << std::endl;
+    
+    auto tStart = std::chrono::high_resolution_clock::now();
 
     // Add vectors in parallel.
     cudaError_t cudaStatus = mandelBrotCalc(pointArray, (unsigned long) X * Y );
+
+    auto tEnd = std::chrono::high_resolution_clock::now() ;
+
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "mandelBrotCalc failed!");
         return 1;
-    }
+    } 
 
     std::cout << "Ending Calculation successfully, Beginning file output" << std::endl;
     

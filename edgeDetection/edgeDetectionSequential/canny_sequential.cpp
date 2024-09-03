@@ -9,9 +9,15 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
-// Shit still brokey
-// look at this:             https://stackoverflow.com/questions/35898433/how-to-compile-code-using-external-dll-library
-#include "../corona-1.0.2-vc7/include/corona.h"
+
+// Use this link for example use of stb files
+// https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "../stbImage/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../stbImage/stb_image_write.h"
+
 // If need to do a bunch of matrix math, consider using eigen
 
 void cannyEdgeDetection (int filterSize);
@@ -28,14 +34,7 @@ void cannyEdgeDetection (int filterSize) {
 
     // Steps for Algorithm
     // open image
-    corona::Image* image = corona::OpenImage("C:\\Users\\Devil\\Desktop\\Random Docs\\490-zambreno\\edgeDetection\\exampleImages\\numbat.jpeg", corona::PF_R8G8B8);
 
-    if (!image) {
-        std::cout << "Oopsies whoopsies a fucky wucky occured" << std::endl;
-    }
-
-    int width = image -> getWidth();
-    int height = image -> getHeight();
     // grayscale image
 
     // Noise reduction (Gaussian blur/filter)
