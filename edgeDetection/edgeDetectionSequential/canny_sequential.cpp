@@ -6,22 +6,24 @@
 **
 */
 
-#include <iostream>
-#include <chrono>
-#include <cmath>
-
 // Use this link for example use of stb files
 // https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
 
+#define _USE_MATH_DEFINES
 #define STB_IMAGE_IMPLEMENTATION
-#include "../stbImage/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include <iostream>
+#include <chrono>
+#include <cmath>
+#include "../stbImage/stb_image.h"
 #include "../stbImage/stb_image_write.h"
 
+constexpr int kernelSize = 5;
 
 void cannyEdgeDetection (int filterSize);
 void grayscale (int width, int height, int channels);
-double* gaussianKernel (int matSize);
+void gaussianKernel (double kernel[kernelSize][kernelSize]);
 
 unsigned char* image;
 
@@ -40,10 +42,9 @@ void cannyEdgeDetection (int filterSize) {
 
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
+    // Grayscale the Image to 
     grayscale(width, height, channels);
-
-    // grayscale image
-
+    
     // Noise reduction (Gaussian blur/filter)
 
     // Gradient Calculation
@@ -54,8 +55,15 @@ void cannyEdgeDetection (int filterSize) {
     stbi_image_free(image);
 }
 
+/**
+ * 
+ * Grayscales the input image using formula found on (2) - Luma Method:
+ * https://tannerhelland.com/2011/10/01/grayscale-image-algorithm-vb6.html
+ * 
+ */
 void grayscale(int width, int height, int channels) {
 
+    // Allocate
     unsigned char* grayImage = (unsigned char*) malloc(width * height * sizeof(unsigned char));
 
     // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
@@ -63,23 +71,50 @@ void grayscale(int width, int height, int channels) {
         grayImage[imageCtr / 3] = (image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
     }
 
-    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, grayImage, width);
+    image = grayImage;
+
+    // Write grayscaled Image as a log
+    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, image, width);
 
 }
 
 /*
-Pseudocode:
-def gaussian_kernel(size, sigma=1):
-    size = int(size) // 2
-    x, y = np.mgrid[-size:size+1, -size:size+1]
-    normal = 1 / (2.0 * np.pi * sigma**2)
-    g =  np.exp(-((x**2 + y**2) / (2.0*sigma**2))) * normal
-    return g
+double sigma = 1;
+int W = 5;
+double kernel[W][W];
+double mean = W/2;
+double sum = 0.0; // For accumulating the kernel values
+for (int x = 0; x < W; ++x) 
+    for (int y = 0; y < W; ++y) {
+        kernel[x][y] = exp( -0.5 * (pow((x-mean)/sigma, 2.0) + pow((y-mean)/sigma,2.0)) )
+                         / (2 * M_PI * sigma * sigma);
+
+        // Accumulate the kernel values
+        sum += kernel[x][y];
+    }
+
+// Normalize the kernel
+for (int x = 0; x < W; ++x) 
+    for (int y = 0; y < W; ++y)
+        kernel[x][y] /= sum;
 */
 // Returns a gaussian Filter kernel of matSize size, 
-double* gaussianKernel (int matSize) {
+void gaussianKernel (double kernel[kernelSize][kernelSize]) {
     double sigma = 1.0;
+    double mean = kernelSize / 2.0;
+    double sum = 0.0;
+ 
+    for (int i = 0; i < kernelSize; i++) {
+        for (int j = 0; j < kernelSize; j++) {
+            kernel[i][j] = exp( -0.5 * (pow((i - mean) / sigma, 2.0) + pow((j - mean) / sigma, 2.0)) ) / (2 * M_PI * sigma * sigma);
+            sum += kernel[i][j];
+        }
+    }
 
+    for (int i = 0; i < kernelSize; i++) {
+        for (int j = 0; j < kernelSize; j++) {
+            kernel[i][j] /= sum;
+        }
+    }
 
-    return NULL;
 }
