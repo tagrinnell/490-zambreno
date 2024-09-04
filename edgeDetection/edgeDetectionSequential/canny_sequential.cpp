@@ -18,11 +18,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../stbImage/stb_image_write.h"
 
-// If need to do a bunch of matrix math, consider using eigen
 
 void cannyEdgeDetection (int filterSize);
-void grayscale ();
+void grayscale (int width, int height, int channels);
 double* gaussianKernel (int matSize);
+
+unsigned char* image;
 
 int main () {
     std::cout << "Beginning run" << std::endl;
@@ -34,6 +35,12 @@ void cannyEdgeDetection (int filterSize) {
 
     // Steps for Algorithm
     // open image
+    int width, height, channels;
+    image = stbi_load("C:\\Users\\tasma\\Desktop\\Textbooks\\490-zambreno\\edgeDetection\\exampleImages\\numbat.jpeg", &width, &height, &channels, 3);
+
+    std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
+
+    grayscale(width, height, channels);
 
     // grayscale image
 
@@ -43,9 +50,20 @@ void cannyEdgeDetection (int filterSize) {
     // Non-maximum suppression
     // double threshold
     // Edge tracking by hysteresis
+
+    stbi_image_free(image);
 }
 
-void grayscale() {
+void grayscale(int width, int height, int channels) {
+
+    unsigned char* grayImage = (unsigned char*) malloc(width * height * sizeof(unsigned char));
+
+    // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
+    for (int imageCtr = 0; imageCtr < width * height * channels; imageCtr += channels) {
+        grayImage[imageCtr / 3] = (image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
+    }
+
+    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, grayImage, width);
 
 }
 
