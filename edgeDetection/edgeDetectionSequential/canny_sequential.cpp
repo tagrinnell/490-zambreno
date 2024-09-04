@@ -24,6 +24,7 @@ constexpr int kernelSize = 5;
 void cannyEdgeDetection (int filterSize);
 void grayscale (int width, int height, int channels);
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
+void gaussianBlur(int width, int height);
 
 unsigned char* image;
 
@@ -46,6 +47,7 @@ void cannyEdgeDetection (int filterSize) {
     grayscale(width, height, channels);
     
     // Noise reduction (Gaussian blur/filter)
+    gaussianBlur(width,height);
 
     // Gradient Calculation
     // Non-maximum suppression
@@ -78,26 +80,7 @@ void grayscale(int width, int height, int channels) {
 
 }
 
-/*
-double sigma = 1;
-int W = 5;
-double kernel[W][W];
-double mean = W/2;
-double sum = 0.0; // For accumulating the kernel values
-for (int x = 0; x < W; ++x) 
-    for (int y = 0; y < W; ++y) {
-        kernel[x][y] = exp( -0.5 * (pow((x-mean)/sigma, 2.0) + pow((y-mean)/sigma,2.0)) )
-                         / (2 * M_PI * sigma * sigma);
 
-        // Accumulate the kernel values
-        sum += kernel[x][y];
-    }
-
-// Normalize the kernel
-for (int x = 0; x < W; ++x) 
-    for (int y = 0; y < W; ++y)
-        kernel[x][y] /= sum;
-*/
 // Returns a gaussian Filter kernel of matSize size, 
 void gaussianKernel (double kernel[kernelSize][kernelSize]) {
     double sigma = 1.0;
@@ -117,4 +100,46 @@ void gaussianKernel (double kernel[kernelSize][kernelSize]) {
         }
     }
 
+}
+
+/**
+ * Generate Gaussian Kernel, then apply the blur by convolving with the image.
+ */
+/*
+Think about this
+https://www.baeldung.com/cs/convolution-matrix-multiplication
+
+for each image row in input image:
+    for each pixel in image row:
+    
+        set accumulator to zero
+
+        for each kernel row in kernel:
+            for each element in kernel row:
+
+                if element position  corresponding* to pixel position then
+                    multiply element value  corresponding* to pixel value
+                    add result to accumulator
+                endif
+
+         set output image pixel to accumulator
+*/
+void gaussianBlur(int width, int height) {
+    double kernel[kernelSize][kernelSize];
+
+    gaussianKernel(kernel);
+
+    // Convolve the matrix
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+
+            
+            for (int k = 0; k < kernelSize; k++) {
+                for (int l = 0; l < kernelSize; l++) {
+                
+                }
+            }
+
+        }
+    }
 }
