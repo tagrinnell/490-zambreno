@@ -23,5 +23,5 @@
 **/.vs/**
 **/CMakeFiles/**
 **/*.cmake
-/mandelParallel/mandelParallel.sln
+!**/mandelParallel/mandelParallel.sln
 !CMakeLists.txt

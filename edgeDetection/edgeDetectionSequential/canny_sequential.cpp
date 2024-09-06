@@ -132,11 +132,11 @@ void gaussianBlur(int width, int height) {
     // Convolve the matrix
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-
+            
             
             for (int k = 0; k < kernelSize; k++) {
                 for (int l = 0; l < kernelSize; l++) {
-                
+                    image[i * width + j] = 0;
                 }
             }
 
