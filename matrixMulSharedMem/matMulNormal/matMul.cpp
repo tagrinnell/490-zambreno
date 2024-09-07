@@ -12,18 +12,20 @@
 // number of rows for the matrix
 constexpr int rows = 3;
 
-void randMatVals(int** matrix);
-void matMul(int** matA, int** matB, int** outputMat);
-void printMat(int** matrix, std::string string);
+void randMatVals(int matrix[rows][rows]);
+void matMul(int matA[rows][rows], int matB[rows][rows], int outputMat[rows][rows]);
+void printMat(int matrix[rows][rows], std::string string);
+void clearMat(int matrix[rows][rows]);
 
 int main() {
 
-    int** matA = (int**) malloc(sizeof(int) * rows * rows);
-    int** matB = (int**) malloc(sizeof(int) * rows * rows);
-    int** outMat = (int**) malloc(sizeof(int) * rows * rows);
+    int matA[rows][rows];
+    int matB[rows][rows];
+    int outMat[rows][rows];
 
     randMatVals(matA);
     randMatVals(matB);
+    clearMat(outMat);
 
     matMul(matA, matB, outMat);
 
@@ -32,16 +34,16 @@ int main() {
     printMat(outMat, "Output Matrix");
 }
 
-void randMatVals(int** matrix) {
+void randMatVals(int matrix[rows][rows]) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < rows; j++) {
             // generates random values for a matrix between 0-200
-            matrix[i][j] = rand() % 200;
+            matrix[i][j] = rand() % 10;
         }
     }
 }
 
-void matMul(int** matA, int** matB, int** outputMat) {
+void matMul(int matA[rows][rows], int matB[rows][rows], int outputMat[rows][rows]) {
 
     int outMatX = 0;
     int outMatY = 0;
@@ -56,18 +58,29 @@ void matMul(int** matA, int** matB, int** outputMat) {
 
 }
 
-void printMat(int** mat, std::string string) {
+void printMat(int mat[rows][rows], std::string string) {
 
-    std::cout << string << std::endl;
+    std::cout  << string << std::endl;
     
     for (int i = 0; i < rows; i++) {
         std::cout << "[ ";
 
         for (int j = 0; j < rows; j++) {
-            std::cout << mat[i][j] << "\t";            
+            std::cout << mat[i][j];
+            if (j != rows - 1) {
+                std::cout << "\t"; 
+            }           
         }
 
         std::cout << " ]" << std::endl;
     }
 
+}
+
+void clearMat(int matrix[rows][rows]) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < rows; j++) {
+            matrix[i][j] = 0;
+        }
+    }
 }
