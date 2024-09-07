@@ -19,12 +19,16 @@ void clearMat(int matrix[rows][rows]);
 
 int main() {
 
+    // Creates Matrices
     int matA[rows][rows];
     int matB[rows][rows];
     int outMat[rows][rows];
 
+    // Generate random values for input matrices
     randMatVals(matA);
     randMatVals(matB);
+
+    // Clears the output Matrix
     clearMat(outMat);
 
     matMul(matA, matB, outMat);
@@ -34,6 +38,9 @@ int main() {
     printMat(outMat, "Output Matrix");
 }
 
+/**
+ * Generates random values between 0-10 for a matrix
+ */
 void randMatVals(int matrix[rows][rows]) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < rows; j++) {
@@ -43,6 +50,9 @@ void randMatVals(int matrix[rows][rows]) {
     }
 }
 
+/**
+ * Multiplies two matrices together, storing in outputMat
+ */
 void matMul(int matA[rows][rows], int matB[rows][rows], int outputMat[rows][rows]) {
 
     int outMatX = 0;
@@ -58,6 +68,9 @@ void matMul(int matA[rows][rows], int matB[rows][rows], int outputMat[rows][rows
 
 }
 
+/**
+ * Prints a matrix Out.
+ */
 void printMat(int mat[rows][rows], std::string string) {
 
     std::cout  << string << std::endl;
@@ -77,6 +90,9 @@ void printMat(int mat[rows][rows], std::string string) {
 
 }
 
+/**
+ * Clears a matrix, effectively memsetting
+ */
 void clearMat(int matrix[rows][rows]) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < rows; j++) {

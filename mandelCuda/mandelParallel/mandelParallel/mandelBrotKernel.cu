@@ -88,17 +88,6 @@ __global__ void computeSet(struct Point* returnPointArr) {
 */
 int main()
 {
-    // For Checking Devices in System ( Debugging mainly )
-    int nDevices;
-
-    cudaGetDeviceCount(&nDevices);
-    for (int i = 0; i < nDevices; i++) {
-        cudaDeviceProp prop;
-        cudaGetDeviceProperties(&prop, i);
-        std::cout << "Device Number: " << i << std::endl;
-        std::cout << "  Device name: " << prop.name << std::endl;
-    }
-
     std::cout.setf(std::ios_base::unitbuf);
 
     struct Point *pointArray = new struct Point[X * Y];
@@ -106,10 +95,8 @@ int main()
     std::cout << "Beginning Calculation" << std::endl;
     
     auto tStart = std::chrono::high_resolution_clock::now();
-
     // Add vectors in parallel.
     cudaError_t cudaStatus = mandelBrotCalc(pointArray, (unsigned long) X * Y );
-
     auto tEnd = std::chrono::high_resolution_clock::now() ;
 
     if (cudaStatus != cudaSuccess) {
@@ -138,8 +125,7 @@ int main()
     // Output results
     std::cout << "Ending file output" << std::endl;
 
-    // cudaDeviceReset must be called before exiting in order for profiling and
-    // tracing tools such as Nsight and Visual Profiler to show complete traces.
+    // cudaDeviceReset must be called before exiting 
     cudaStatus = cudaDeviceReset();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaDeviceReset failed!");
@@ -166,27 +152,14 @@ cudaError_t mandelBrotCalc (struct Point* pointArray, unsigned long size)
         goto Error;
     }
 
-    // Allocate GPU buffers for output vectors (two input, one output).
+    // Allocate GPU buffers for output vector
     cudaStatus = cudaMalloc((void**)&dev_points, X * Y * sizeof(struct Point));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
 
-    // Launch a kernel on the GPU with 16 threads for each element.
-    // Num blocks, numThreads
-    /*
-        Notes:
-        blockDim.x,y,z gives the number of threads in a block, in the particular direction
-        gridDim.x,y,z gives the number of blocks in a grid, in the particular direction
-        blockDim.x * gridDim.x gives the number of threads in a grid (in the x direction, in this case)
-
-    */
-    
-    // Use Grid Dim to define grid paramters
-    // In kernel, use the block Id and the x, y thread indices to find which section of the 
-    // Array the thread should run over
-
+    // Call kernel
     computeSet CUDA_KERNEL (nblocks, nthreads)  (dev_points);
 
     // Check for any errors launching the kernel
@@ -196,8 +169,7 @@ cudaError_t mandelBrotCalc (struct Point* pointArray, unsigned long size)
         goto Error;
     }
     
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
+    // Wait for kernel to finish
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching computeSet!\n", cudaStatus);
