@@ -1,5 +1,4 @@
-﻿
-#include "cuda_runtime.h"
+﻿#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
 #include <cstdlib>
@@ -16,11 +15,14 @@
 constexpr int rows = 3;
 __device__ constexpr int matRows = rows;
 
+__managed__ int matrixA[rows][rows];
+__managed__ int matrixB[rows][rows];
+
 // Kernel wrapper class
-cudaError_t kernelWrapper(int outputMatrix[rows][rows]);
+cudaError_t kernelWrapper();
 // Matrix Multiply kernel
 // int matA[matRows][matRows], int matB[matRows][matRows],
-__global__ void matMul(int matrixA[matRows][matRows], int matrixB[matRows][matRows], int outputMat[matRows][matRows]);
+__global__ void matMul(int outputMat[matRows][matRows]);
 
 // Helper functions to set up and print matrices
 void randMatVals(int matrix[rows][rows]);
@@ -29,15 +31,8 @@ void clearMat(int matrix[rows][rows]);
 
 int main()
 {
-    int outputMatrix[rows][rows];
-
-    // Initializes Matrices with random values
-
-    // Sets all values in outputMatrix to 0
-    clearMat(outputMatrix);
-
     // Add vectors in parallel.
-    cudaError_t cudaStatus = kernelWrapper(outputMatrix);
+    cudaError_t cudaStatus = kernelWrapper();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "addWithCuda failed!");
         return 1;
@@ -54,20 +49,21 @@ int main()
 }
 
 // Helper function for using CUDA to add vectors in parallel.
-cudaError_t kernelWrapper(int outputMatrix[rows][rows])
+cudaError_t kernelWrapper()
 {
-    dim3 blockDims(matRows, matRows);
-    int dev_matA[matRows][matRows];
-    int dev_matB[matRows][matRows];
-
-    randMatVals(dev_matA);
-    randMatVals(dev_matB);
-
-    printMat(dev_matA, "Matrix A");
-    printMat(dev_matB, "Matrix B");
-    
-
+    dim3 blockDims(rows, rows);
     int dev_outMat[rows][rows];
+    int matrix[rows][rows];
+    clearMat(matrix);
+
+    // Set up device __managed__ matrices
+    randMatVals(matrixA);
+    randMatVals(matrixB);
+
+    printMat(matrixA, "__managed__ Matrix A");
+    printMat(matrixB, "__managed__ Matrix B");
+    printMat(matrix, "Output Matrix");
+
     cudaError_t cudaStatus;
 
     // Choose which GPU to run on, change this on a multi-GPU system.
@@ -77,35 +73,24 @@ cudaError_t kernelWrapper(int outputMatrix[rows][rows])
         goto Error;
     }
 
-    // Set shared Memory for matricesA, B
-    cudaStatus = cudaMallocManaged((void**)&dev_matA, sizeof(dev_matA));
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed!");
-        goto Error;
-    }
-
-    cudaStatus = cudaMallocManaged((void**)&dev_matB, sizeof(dev_matB));
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed!");
-        goto Error;
-    }
-
     // Allocate buffer for output Matrix
-    cudaStatus = cudaMalloc((void**)&dev_outMat, sizeof(outputMatrix));
+    cudaStatus = cudaMalloc((void**)&dev_outMat, rows * rows * sizeof(int));
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMalloc failed!");
         goto Error;
     }
+
+    //clearMat(dev_outMat);
 
     // Copy cleared output matrix into the dev_outMat 
-    cudaStatus = cudaMemcpy(dev_outMat, outputMatrix, sizeof(outputMatrix), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_outMat, matrix, rows * rows * sizeof(int), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMalloc failed!");
+        fprintf(stderr, "To device cudaMemcpy failed!");
         goto Error;
     }
 
     // Launch a kernel on the GPU with one thread for each element.
-    matMul CUDA_KERNEL(1, blockDims) (dev_matA, dev_matB, dev_outMat);
+    matMul CUDA_KERNEL(1, blockDims) (dev_outMat);
 
     // Check for any errors launching the kernel
     cudaStatus = cudaGetLastError();
@@ -123,23 +108,22 @@ cudaError_t kernelWrapper(int outputMatrix[rows][rows])
     }
 
     // Copy output vector from GPU buffer to host memory.
-    cudaStatus = cudaMemcpy(outputMatrix, dev_outMat, rows * rows * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaStatus = cudaMemcpy(matrix, dev_outMat, rows * rows * sizeof(int), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaMemcpy failed!");
+        fprintf(stderr, "cudaMemcpy to host failed!");
         goto Error;
     }
 
-    printMat(dev_outMat, "Output Matrix");
+    printMat(matrix, "Output Matrix");
 
 Error:
-    cudaFree(dev_matA);
-    cudaFree(dev_matB);
     cudaFree(dev_outMat);
     
     return cudaStatus;
 }
 
-__global__ void matMul(int matrixA[matRows][matRows], int matrixB[matRows][matRows], int outputMat[matRows][matRows]) {
+__global__ void matMul(int outputMat[matRows][matRows]) {
+    outputMat[threadIdx.x][threadIdx.y] = 0;
 
     for (int i = 0; i < matRows; i++) {
         outputMat[threadIdx.x][threadIdx.y] += matrixA[threadIdx.x][i] * matrixB[i][threadIdx.y];
