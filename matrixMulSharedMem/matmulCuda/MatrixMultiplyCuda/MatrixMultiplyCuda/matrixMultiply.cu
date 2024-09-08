@@ -83,11 +83,11 @@ cudaError_t kernelWrapper()
     //clearMat(dev_outMat);
 
     // Copy cleared output matrix into the dev_outMat 
-    cudaStatus = cudaMemcpy(dev_outMat, matrix, rows * rows * sizeof(int), cudaMemcpyHostToDevice);
+    /*cudaStatus = cudaMemcpy(*dev_outMat, *matrix, rows * rows * sizeof(int), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "To device cudaMemcpy failed!");
         goto Error;
-    }
+    }*/
 
     // Launch a kernel on the GPU with one thread for each element.
     matMul CUDA_KERNEL(1, blockDims) (dev_outMat);
@@ -109,10 +109,10 @@ cudaError_t kernelWrapper()
 
     // Copy output vector from GPU buffer to host memory.
     cudaStatus = cudaMemcpy(matrix, dev_outMat, rows * rows * sizeof(int), cudaMemcpyDeviceToHost);
-    if (cudaStatus != cudaSuccess) {
+    /*if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cudaMemcpy to host failed!");
         goto Error;
-    }
+    }*/
 
     printMat(matrix, "Output Matrix");
 
