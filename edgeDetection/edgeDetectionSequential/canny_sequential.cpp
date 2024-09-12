@@ -39,7 +39,7 @@ void cannyEdgeDetection (int filterSize) {
     // Steps for Algorithm
     // open image
     int width, height, channels;
-    image = stbi_load("C:\\Users\\tasma\\Desktop\\Textbooks\\490-zambreno\\edgeDetection\\exampleImages\\numbat.jpeg", &width, &height, &channels, 3);
+    image = stbi_load("..\\exampleImages\\numbat.jpeg", &width, &height, &channels, 3);
 
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
@@ -73,7 +73,7 @@ void grayscale(int width, int height, int channels) {
         grayImage[imageCtr / 3] = (image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
     }
 
-    image = grayImage;
+    memcpy(image, grayImage, width * height);
 
     // Write grayscaled Image as a log
     stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, image, width);
@@ -128,18 +128,37 @@ void gaussianBlur(int width, int height) {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
+    int len = sizeof(image) / sizeof(*image);
 
     // Convolve the matrix
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-            
+            int accumX = 0;
+            int accumY = 0;
             
             for (int k = 0; k < kernelSize; k++) {
                 for (int l = 0; l < kernelSize; l++) {
-                    image[i * width + j] = 0;
+                    float valX = 0.0;
+                    float valY = 0.0;
+
+                    if ((i + k) * width + j > width * height) {
+                        valX = 0.0;
+                    } else {
+                        valX = image[(i + k) * width + j];
+                    }
+
+                    if ((i + k) * width + j + l > width * height) {
+                        valY = 0.0;
+                    } else {
+                        valY = image[(i + k) * width + j + l];
+                    }
+                    accumX += valX * kernel[k][l];
+                    accumY += valY * kernel[k][l];
                 }
             }
-
+            image[i * width + j] = pow(accumX * accumX + accumY * accumY, 0.5);
         }
     }
+
+    stbi_write_jpg("..\\exampleImages\\gaussBlur.jpg", width, height, 1, image, width);
 }
