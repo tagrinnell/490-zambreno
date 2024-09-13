@@ -16,6 +16,7 @@
 #include <iostream>
 #include <chrono>
 #include <cmath>
+#include <vector>
 #include "../stbImage/stb_image.h"
 #include "../stbImage/stb_image_write.h"
 
@@ -39,7 +40,8 @@ void cannyEdgeDetection (int filterSize) {
     // Steps for Algorithm
     // open image
     int width, height, channels;
-    image = stbi_load("..\\exampleImages\\numbat.jpeg", &width, &height, &channels, 3);
+    image = stbi_load("..\\numbat.jpeg", &width, &height, &channels, 3);
+    std::vector<char> iVector(image, image + width * height * channels);
 
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
@@ -74,6 +76,23 @@ void grayscale(int width, int height, int channels) {
     }
 
     memcpy(image, grayImage, width * height);
+
+    // Write grayscaled Image as a log
+    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, image, width);
+
+}
+
+void grayscale(int width, int height, int channels, std::vector<char> vector) {
+
+    // Allocate
+    std::vector<char> grayVec;
+
+    // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
+    for (int imageCtr = 0; imageCtr < width * height * channels; imageCtr += channels) {
+        grayVec.push_back(); // image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
+    }
+
+    memcpy(image, grayVec, width * height);
 
     // Write grayscaled Image as a log
     stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, image, width);
@@ -144,18 +163,14 @@ void gaussianBlur(int width, int height) {
                     float valY = 0.0;
 
                     // If we're reaching into the next row (overflowing on right side of image), set multiplier to 0.0
-                    if ((i + k) * width + j > width * i) {
+                    if ((i + k) * width + j + l > width * (i + k + 1) || (i + k) * width + j + l > width * height) {
                         valX = 0.0;
-                    } else {
-                        valX = image[(i + k) * width];
-                    }
-
-                    // If we're overflowing past the bottom of the image, set multiplier to 0.0
-                    if ((i + k) * width + j + l > height * (i + 1)) {
                         valY = 0.0;
                     } else {
+                        valX = image[(i + k) * width];
                         valY = image[(i + k) * width + j + l];
                     }
+
                     accumX += valX * kernel[k][l];
                     accumY += valY * kernel[k][l];
                 }
