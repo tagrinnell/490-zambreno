@@ -130,24 +130,28 @@ void gaussianBlur(int width, int height) {
     gaussianKernel(kernel);
     int len = sizeof(image) / sizeof(*image);
 
+    stbi_write_jpg("..\\exampleImages\\preblur.jpg", width, height, 1, image, width);
+
     // Convolve the matrix
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-            int accumX = 0;
-            int accumY = 0;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            float accumX = 0;
+            float accumY = 0;
             
             for (int k = 0; k < kernelSize; k++) {
                 for (int l = 0; l < kernelSize; l++) {
                     float valX = 0.0;
                     float valY = 0.0;
 
-                    if ((i + k) * width + j > width * height) {
+                    // If we're reaching into the next row (overflowing on right side of image), set multiplier to 0.0
+                    if ((i + k) * width + j > width * i) {
                         valX = 0.0;
                     } else {
-                        valX = image[(i + k) * width + j];
+                        valX = image[(i + k) * width];
                     }
 
-                    if ((i + k) * width + j + l > width * height) {
+                    // If we're overflowing past the bottom of the image, set multiplier to 0.0
+                    if ((i + k) * width + j + l > height * (i + 1)) {
                         valY = 0.0;
                     } else {
                         valY = image[(i + k) * width + j + l];
@@ -156,7 +160,7 @@ void gaussianBlur(int width, int height) {
                     accumY += valY * kernel[k][l];
                 }
             }
-            image[i * width + j] = pow(accumX * accumX + accumY * accumY, 0.5);
+            image[i * width + j] = (char) sqrt(accumX * accumX + accumY * accumY); // fmax(0, fmin(255, 
         }
     }
 
