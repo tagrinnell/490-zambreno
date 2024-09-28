@@ -23,7 +23,7 @@
 constexpr int kernelSize = 5;
 
 void cannyEdgeDetection (int filterSize);
-void grayscale(int width, int height, int channels, std::vector<char> v);
+std::vector<char> grayscale(int width, int height, int channels, std::vector<char> v);
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
 void gaussianBlur(int width, int height, std::vector<char> imV);
 
@@ -46,7 +46,8 @@ void cannyEdgeDetection (int filterSize) {
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
     // Grayscale the Image to 
-    grayscale(width, height, channels, iVector);
+    iVector = grayscale(width, height, channels, iVector);
+    stbi_write_jpg("..\\outputImages\\anotherCheck.jpg", width, height, 1, reinterpret_cast<char*>(iVector.data()), width);
     
     // Noise reduction (Gaussian blur/filter)
     gaussianBlur(width,height, iVector);
@@ -66,7 +67,7 @@ void cannyEdgeDetection (int filterSize) {
  * 
  */
 
-void grayscale(int width, int height, int channels, std::vector<char> v) {
+std::vector<char> grayscale(int width, int height, int channels, std::vector<char> v) {
 
     // Allocate
     std::vector<char> grayVec;
@@ -76,11 +77,9 @@ void grayscale(int width, int height, int channels, std::vector<char> v) {
         grayVec.push_back(v.at(imageCtr) * 0.2126 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722); // image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
     }
 
-    v = grayVec;
-
-    // Write grayscaled Image as a log
+    // Write grayscaled Image
     stbi_write_jpg("..\\outputImages\\grayscaled.jpg", width, height, 1, reinterpret_cast<char*>(grayVec.data()), width);
-
+    return grayVec;
 }
 
 
@@ -131,35 +130,28 @@ void gaussianBlur(int width, int height, std::vector<char> imV) {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
-    int len = imV.size();
 
     // Convolve the matrix
-    // for (int i = 0; i < height; i++) {
-    //     for (int j = 0; j < width; j++) {
-    //         float accumX = 0;
-    //         float accumY = 0;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            float accumX = 0;
+            float accumY = 0;
             
-    //         for (int k = 0; k < kernelSize; k++) {
-    //             for (int l = 0; l < kernelSize; l++) {
-    //                 float valX = 0.0;
-    //                 float valY = 0.0;
+            for (int k = 0; k < kernelSize; k++) {
+                for (int l = 0; l < kernelSize; l++) {
+                    float valX = 0.0;
+                    float valY = 0.0;
 
-    //                 // If we're reaching into the next row (overflowing on right side of image), set multiplier to 0.0
-    //                 if ((i + k) * width + j + l > width * (i + k + 1) || (i + k) * width + j + l > width * height) {
-    //                     valX = 0.0;
-    //                     valY = 0.0;
-    //                 } else {
-    //                     valX = image[(i + k) * width];
-    //                     valY = image[(i + k) * width + j + l];
-    //                 }
+                    // If we're reaching into the next row (overflowing on right side of image), set multiplier to 0.0
+                    
 
-    //                 accumX += valX * kernel[k][l];
-    //                 accumY += valY * kernel[k][l];
-    //             }
-    //         }
-    //         image[i * width + j] = (char) sqrt(accumX * accumX + accumY * accumY); // fmax(0, fmin(255, 
-    //     }
-    // }
+                    accumX += valX * kernel[k][l];
+                    accumY += valY * kernel[k][l];
+                 }
+             }
+            //  image[i * width + j] = (char) sqrt(accumX * accumX + accumY * accumY); // fmax(0, fmin(255, 
+         }
+     }
 
-    // stbi_write_jpg("..\\exampleImages\\gaussBlur.jpg", width, height, 1, image, width);
+     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, reinterpret_cast<char*>(imV.data()), width);
 }
