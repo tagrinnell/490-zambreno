@@ -31,7 +31,7 @@ void gaussianBlur (int width, int height, unsigned char *inArr);
 
 void grayscale (int width, int height, int channels, unsigned char *image);
 unsigned char** convertTo2DArr (unsigned char* inArr, int width, int height);
-char* convertTo1DVec (unsigned char** inArr, int width, int height);
+unsigned char* convertTo1DVec (unsigned char** inArr, int width, int height);
 
 //-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
 
@@ -137,10 +137,11 @@ void gaussianBlur (int width, int height, unsigned char *inArr) {
     gaussianKernel(kernel);
 
     unsigned char** mat = convertTo2DArr(inArr, width, height);
-    unsigned char** blur = (unsigned char**) malloc(width * height * sizeof(unsigned char));
+    unsigned char** blur = new unsigned char*[height];
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
+        blur[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accumX = 0;
             int accumY = 0;
@@ -172,24 +173,25 @@ void gaussianBlur (int width, int height, unsigned char *inArr) {
             blur[i][j] = accum;
         }
     }
-    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, convertTo1DVec(blur, width, height), width);
 }
 
 unsigned char** convertTo2DArr (unsigned char *inArr, int width, int height) {
     // Output will be height# vectors with width# chars
-    unsigned char** outArr = (unsigned char**) malloc(width * height * sizeof(unsigned char));
-    
+    unsigned char **outArr = new unsigned char*[height];
+
     for (int i = 0; i < height; i++) {
+        outArr[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
-            outArr[i][j] = inArr[i * height + j];
+            outArr[i][j] = inArr[i * width + j];
         }
     }
 
     return outArr;
 }
 
-char* convertTo1DVec(unsigned char **inArr, int width, int height) {
-    char* outArr = (char*) malloc(width * height * sizeof(char));
+unsigned char* convertTo1DVec(unsigned char **inArr, int width, int height) {
+    unsigned char* outArr = new unsigned char[width * height];
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
