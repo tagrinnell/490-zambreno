@@ -89,10 +89,10 @@ void gaussianKernel (double kernel[kernelSize][kernelSize]) {
     double mean = kernelSize / 2.0;
     double sum = 0.0;
  
-    for (int i = 0; i < kernelSize; i++) {
-        for (int j = 0; j < kernelSize; j++) {
-            kernel[i][j] = exp(-1.0 * ((i * i + j * j) / (2 * sigma * sigma))) / (2 * M_PI * sigma * sigma);
-            sum += kernel[i][j];
+    for (int i = -1 * kernelSize / 2; i <= kernelSize / 2; i++) {
+        for (int j = -1 * kernelSize / 2; j <= kernelSize / 2; j++) {
+            kernel[i + kernelSize / 2][j + kernelSize / 2] = exp(-1.0 * ((i * i + j * j) / (2 * sigma * sigma))) / sqrt (2 * M_PI * sigma * sigma);
+            sum += kernel[i + kernelSize / 2][j + kernelSize / 2];
         }
     }
 
