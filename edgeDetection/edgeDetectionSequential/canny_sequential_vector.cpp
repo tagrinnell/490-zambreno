@@ -6,6 +6,17 @@
 **
 */
 
+/////---------------------------------------------------------------------------------------------/////
+//---------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------------------------------------------//
+//---------------------------------WORK IN PROGRESS;ISN'T WORKING------------------------------------//
+//---------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------------------------------------------//
+/////---------------------------------------------------------------------------------------------/////
+
+// Use this link for example use of stb files
+// https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
+
 #define _USE_MATH_DEFINES
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -16,7 +27,7 @@
 #include <vector>
 #include "../stbImage/stb_image.h"
 #include "../stbImage/stb_image_write.h"
- 
+
 //-----------------------------------------------------GLOBAL VARS---------------------------------------------------------------------------//
 
 constexpr int kernelSize = 5;
@@ -25,13 +36,13 @@ constexpr int kernelSize = 5;
 
 void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
-void gaussianBlur(int width, int height, char imV[]);
+void gaussianBlur(int width, int height, std::vector<char> imV);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
-void grayscale(int width, int height, int channels, unsigned char *image);
-char** convertTo2DArr (char* inArr, int width, int height);
-char* convertTo1DVec(char** inArr, int width, int height);
+std::vector<unsigned char> grayscale(int width, int height, int channels, std::vector<unsigned char> v);
+std::vector <std::vector <char>> convertTo2DVec(std::vector <char> array, int width, int height);
+std::vector <char> convertTo1DVec(std::vector <std::vector <char>> inpVec, int width, int height);
 
 //-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
 
@@ -47,11 +58,16 @@ void cannyEdgeDetection () {
     unsigned char *image;
     
     image = stbi_load("..\\numbat.jpeg", &width, &height, &channels, 3);
+    std::vector<unsigned char> iVector;
+
+    for (int i = 0; i < width * height * channels; i++) {
+        iVector.push_back(image[i]);
+    }
 
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
     // Grayscale the Image to 
-    grayscale(width, height, channels, image);
+    iVector = grayscale(width, height, channels, iVector);
     
     // // Noise reduction (Gaussian blur/filter)
     // gaussianBlur(width, height, iVector);
@@ -70,21 +86,23 @@ void cannyEdgeDetection () {
  * https://tannerhelland.com/2011/10/01/grayscale-image-algorithm-vb6.html
  * 
  */
-void grayscale(int width, int height, int channels, unsigned char *image) {
+
+std::vector<unsigned char> grayscale(int width, int height, int channels, std::vector<unsigned char> v) {
 
     // Allocate
-    unsigned char* grayImage = (unsigned char*) malloc(width * height * sizeof(unsigned char));
+    std::vector<unsigned char> grayVec;
 
     // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
     for (int imageCtr = 0; imageCtr < width * height * channels; imageCtr += channels) {
-        grayImage[imageCtr / 3] = (image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
+        unsigned char gray = v.at(imageCtr) * 0.3333 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722;
+        grayVec.push_back(gray);
+        // grayVec.push_back(gray);
+        // grayVec.push_back(gray);
     }
 
-    memcpy(image, grayImage, width * height);
-
-    // Write grayscaled Image as a log
-    stbi_write_jpg("..\\outputImages\\grayscaled.jpg", width, height, 1, image, width);
-
+    // Write grayscaled Image
+    stbi_write_jpg("..\\outputImages\\grayscaled.jpg", width, height, 1, reinterpret_cast<char*>(grayVec.data()), width);
+    return grayVec;
 }
 
 
@@ -131,13 +149,13 @@ for each image row in input image:
 
          set output image pixel to accumulator
 */
-void gaussianBlur (int width, int height, char inArr[]) {
+void gaussianBlur(int width, int height, std::vector<char> imV) {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
 
-    char** mat = convertTo2DArr(inArr, width, height);
-    char** blur = (char**) malloc(width * height * sizeof(char));
+    std::vector <std::vector<char>> expVec = convertTo2DVec(imV, width, height);
+    std::vector<char> outVector;
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
@@ -162,40 +180,44 @@ void gaussianBlur (int width, int height, char inArr[]) {
                         y = fmin(width - 1, y);
                     }
 
-                    accumX += kernel[k][l] * mat[x][y];
-                    accumY += kernel[k][l] * mat[x][y];
+                    accumX += kernel[k][l] * expVec.at(x).at(y);
+                    accumY += kernel[k][l] * expVec.at(x).at(y);
                  }
              }
             int accum = sqrt((accumX * accumX) + (accumY * accumY));
             accum = fmax(0, fmin(255, accum));
 
-            blur[i][j] = accum;
-        }
-    }
-    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, blur, width);
+            outVector.push_back(accum);
+         }
+     }
+
+     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, reinterpret_cast<char*>(outVector.data()), width);
 }
 
-char** convertTo2DArr (char* inArr, int width, int height) {
+std::vector <std::vector <char>> convertTo2DVec(std::vector <char> array, int width, int height) {
     // Output will be height# vectors with width# chars
-    char** outArr = (char**) malloc(width * height * sizeof(char));
+    std::vector <std::vector <char>> outVec;
     
     for (int i = 0; i < height; i++) {
+        std::vector <char> appVec;
         for (int j = 0; j < width; j++) {
-            outArr[i][j] = inArr[i * width + j];
+            appVec.push_back(array.at(i * width + j));
         }
+        outVec.push_back(appVec);
     }
 
-    return outArr;
+    return outVec;
 }
 
-char* convertTo1DVec(char** inArr, int width, int height) {
-    char* outArr = (char*) malloc(width * height * sizeof(char));
+std::vector <char> convertTo1DVec(std::vector <std::vector <char>> inpVec, int width, int height) {
+    std::vector <char> outVec;
 
     for (int i = 0; i < height; i++) {
+        std::vector <char> endVec = inpVec.at(i);
         for (int j = 0; j < width; j++) {
-            outArr[i * width + j] = inArr[i][j];
+            outVec.push_back(endVec.at(j));
         }
     }
 
-    return outArr;
+    return outVec;
 }
