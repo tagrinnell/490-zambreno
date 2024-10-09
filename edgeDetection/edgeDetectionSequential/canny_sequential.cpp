@@ -20,22 +20,31 @@
 #include "../stbImage/stb_image.h"
 #include "../stbImage/stb_image_write.h"
 
+//-----------------------------------------------------GLOBAL VARS---------------------------------------------------------------------------//
+
 constexpr int kernelSize = 5;
 
-void cannyEdgeDetection (int filterSize);
-std::vector<char> grayscale(int width, int height, int channels, std::vector<char> v);
+//---------------------------------------------------CANNY FUNCTIONS-------------------------------------------------------------------------//
+
+void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
 void gaussianBlur(int width, int height, std::vector<char> imV);
 
+//---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
+
+std::vector<char> grayscale(int width, int height, int channels, std::vector<char> v);
+std::vector <std::vector <char>> convertTo2DVec(std::vector <char> array, int width, int height);
+std::vector <char> convertTo1DVec(std::vector <std::vector <char>> inpVec, int width, int height);
+
+//-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
+
 int main () {
     std::cout << "Beginning run" << std::endl;
-    cannyEdgeDetection(5);
+    cannyEdgeDetection();
     return 0;
 }
 
-void cannyEdgeDetection (int filterSize) {
-
-    // Steps for Algorithm
+void cannyEdgeDetection () {
     // open image
     int width, height, channels;
     unsigned char *image;
@@ -50,7 +59,7 @@ void cannyEdgeDetection (int filterSize) {
     stbi_write_jpg("..\\outputImages\\anotherCheck.jpg", width, height, 1, reinterpret_cast<char*>(iVector.data()), width);
     
     // Noise reduction (Gaussian blur/filter)
-    gaussianBlur(width,height, iVector);
+    gaussianBlur(width, height, iVector);
 
     // Gradient Calculation
     // Non-maximum suppression
@@ -74,7 +83,7 @@ std::vector<char> grayscale(int width, int height, int channels, std::vector<cha
 
     // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
     for (int imageCtr = 0; imageCtr < width * height * channels; imageCtr += channels) {
-        grayVec.push_back(v.at(imageCtr) * 0.2126 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722); // image[imageCtr] * 0.2126 + image[imageCtr + 1] * 0.7152 + image[imageCtr + 2] * 0.0722);
+        grayVec.push_back(v.at(imageCtr) * 0.2126 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722);
     }
 
     // Write grayscaled Image
@@ -131,6 +140,9 @@ void gaussianBlur(int width, int height, std::vector<char> imV) {
 
     gaussianKernel(kernel);
 
+    std::vector <std::vector<char>> expVec = convertTo2DVec(imV, width, height);
+    std::vector<char> outVector;
+
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -142,16 +154,54 @@ void gaussianBlur(int width, int height, std::vector<char> imV) {
                     float valX = 0.0;
                     float valY = 0.0;
 
-                    // If we're reaching into the next row (overflowing on right side of image), set multiplier to 0.0
+                    int x = i + (j - kernelSize / 2);
+                    int y = j + (l - kernelSize / 2);
                     
+                    if (x < 0 || y < 0) {
+                        x = fmax(0, x);
+                        y = fmax(0, y);
+                    } else if (x > height - 1 || y > width - 1) {
+                        x = fmin(height - 1, x);
+                        y = fmin(width - 1, y);
+                    }
 
-                    accumX += valX * kernel[k][l];
-                    accumY += valY * kernel[k][l];
+                    accumX += kernel[k][l] * expVec.at(x).at(y);
+                    accumY += kernel[k][l] * expVec.at(x).at(y);
                  }
              }
-            //  image[i * width + j] = (char) sqrt(accumX * accumX + accumY * accumY); // fmax(0, fmin(255, 
+            int accum = sqrt((accumX * accumX) + (accumY * accumY));
+            accum = fmax(0, fmin(15, accum));
+            outVector.push_back(accum);
          }
      }
 
-     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, reinterpret_cast<char*>(imV.data()), width);
+     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, reinterpret_cast<char*>(outVector.data()), width);
+}
+
+std::vector <std::vector <char>> convertTo2DVec(std::vector <char> array, int width, int height) {
+    // Output will be height# vectors with width# chars
+    std::vector <std::vector <char>> outVec;
+    
+    for (int i = 0; i < height; i++) {
+        std::vector <char> appVec;
+        for (int j = 0; j < width; j++) {
+            appVec.push_back(array.at(i * width + j));
+        }
+        outVec.push_back(appVec);
+    }
+
+    return outVec;
+}
+
+std::vector <char> convertTo1DVec(std::vector <std::vector <char>> inpVec, int width, int height) {
+    std::vector <char> outVec;
+
+    for (int i = 0; i < height; i++) {
+        std::vector <char> endVec = inpVec.at(i);
+        for (int j = 0; j < width; j++) {
+            outVec.push_back(endVec.at(j));
+        }
+    }
+
+    return outVec;
 }
