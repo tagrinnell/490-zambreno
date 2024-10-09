@@ -25,13 +25,13 @@ constexpr int kernelSize = 5;
 
 void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
-void gaussianBlur(int width, int height, char imV[]);
+void gaussianBlur (int width, int height, unsigned char *inArr);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
-void grayscale(int width, int height, int channels, unsigned char *image);
-char** convertTo2DArr (char* inArr, int width, int height);
-char* convertTo1DVec(char** inArr, int width, int height);
+void grayscale (int width, int height, int channels, unsigned char *image);
+unsigned char** convertTo2DArr (unsigned char* inArr, int width, int height);
+char* convertTo1DVec (unsigned char** inArr, int width, int height);
 
 //-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
 
@@ -54,7 +54,7 @@ void cannyEdgeDetection () {
     grayscale(width, height, channels, image);
     
     // // Noise reduction (Gaussian blur/filter)
-    // gaussianBlur(width, height, iVector);
+    gaussianBlur(width, height, image);
 
     // Gradient Calculation
     // Non-maximum suppression
@@ -131,13 +131,13 @@ for each image row in input image:
 
          set output image pixel to accumulator
 */
-void gaussianBlur (int width, int height, char inArr[]) {
+void gaussianBlur (int width, int height, unsigned char *inArr) {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
 
-    char** mat = convertTo2DArr(inArr, width, height);
-    char** blur = (char**) malloc(width * height * sizeof(char));
+    unsigned char** mat = convertTo2DArr(inArr, width, height);
+    unsigned char** blur = (unsigned char**) malloc(width * height * sizeof(unsigned char));
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
@@ -172,23 +172,23 @@ void gaussianBlur (int width, int height, char inArr[]) {
             blur[i][j] = accum;
         }
     }
-    stbi_write_jpg("..\\exampleImages\\grayscaled.jpg", width, height, 1, blur, width);
+    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
 }
 
-char** convertTo2DArr (char* inArr, int width, int height) {
+unsigned char** convertTo2DArr (unsigned char *inArr, int width, int height) {
     // Output will be height# vectors with width# chars
-    char** outArr = (char**) malloc(width * height * sizeof(char));
+    unsigned char** outArr = (unsigned char**) malloc(width * height * sizeof(unsigned char));
     
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            outArr[i][j] = inArr[i * width + j];
+            outArr[i][j] = inArr[i * height + j];
         }
     }
 
     return outArr;
 }
 
-char* convertTo1DVec(char** inArr, int width, int height) {
+char* convertTo1DVec(unsigned char **inArr, int width, int height) {
     char* outArr = (char*) malloc(width * height * sizeof(char));
 
     for (int i = 0; i < height; i++) {
