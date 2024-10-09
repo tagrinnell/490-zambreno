@@ -56,9 +56,8 @@ void cannyEdgeDetection () {
 
     // Grayscale the Image to 
     iVector = grayscale(width, height, channels, iVector);
-    stbi_write_jpg("..\\outputImages\\anotherCheck.jpg", width, height, 1, reinterpret_cast<char*>(iVector.data()), width);
     
-    // Noise reduction (Gaussian blur/filter)
+    // // Noise reduction (Gaussian blur/filter)
     gaussianBlur(width, height, iVector);
 
     // Gradient Calculation
@@ -83,7 +82,10 @@ std::vector<char> grayscale(int width, int height, int channels, std::vector<cha
 
     // Gray = (Red * 0.2126 + Green * 0.7152 + Blue * 0.0722)
     for (int imageCtr = 0; imageCtr < width * height * channels; imageCtr += channels) {
-        grayVec.push_back(v.at(imageCtr) * 0.2126 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722);
+        char gray = v.at(imageCtr) * 0.3333 + v.at(imageCtr + 1) * 0.7152 + v.at(imageCtr + 2) * 0.0722;
+        grayVec.push_back(gray);
+        // grayVec.push_back(gray);
+        // grayVec.push_back(gray);
     }
 
     // Write grayscaled Image
@@ -146,21 +148,22 @@ void gaussianBlur(int width, int height, std::vector<char> imV) {
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            float accumX = 0;
-            float accumY = 0;
+            int accumX = 0;
+            int accumY = 0;
             
             for (int k = 0; k < kernelSize; k++) {
                 for (int l = 0; l < kernelSize; l++) {
-                    float valX = 0.0;
-                    float valY = 0.0;
 
-                    int x = i + (j - kernelSize / 2);
+                    int x = i + (k - kernelSize / 2);
                     int y = j + (l - kernelSize / 2);
                     
+                    // Make sure we're in bounds
                     if (x < 0 || y < 0) {
                         x = fmax(0, x);
                         y = fmax(0, y);
-                    } else if (x > height - 1 || y > width - 1) {
+                    } 
+                    
+                    if (x > height - 1 || y > width - 1) {
                         x = fmin(height - 1, x);
                         y = fmin(width - 1, y);
                     }
@@ -170,7 +173,8 @@ void gaussianBlur(int width, int height, std::vector<char> imV) {
                  }
              }
             int accum = sqrt((accumX * accumX) + (accumY * accumY));
-            accum = fmax(0, fmin(15, accum));
+            accum = fmax(0, fmin(255, accum));
+
             outVector.push_back(accum);
          }
      }
