@@ -25,13 +25,14 @@ constexpr int kernelSize = 5;
 
 void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
-void gaussianBlur (int width, int height, unsigned char *inArr);
+void gaussianBlur (unsigned char *inArr, int width, int height);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
-void grayscale (int width, int height, int channels, unsigned char *image);
+void grayscale (unsigned char *image, int width, int height, int channels);
 unsigned char** convertTo2DArr (unsigned char* inArr, int width, int height);
-unsigned char* convertTo1DVec (unsigned char** inArr, int width, int height);
+unsigned char* convertTo1DArr(unsigned char **inArr, int width, int height);
+unsigned char* convolve(unsigned char* input, double** kernel, int kernelSize, int width, int height);
 
 //-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
 
@@ -51,10 +52,10 @@ void cannyEdgeDetection () {
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
     // Grayscale the Image to 
-    grayscale(width, height, channels, image);
+    grayscale(image, width, height, channels);
     
     // // Noise reduction (Gaussian blur/filter)
-    gaussianBlur(width, height, image);
+    gaussianBlur(image, width, height);
 
     // Gradient Calculation
     // Non-maximum suppression
@@ -70,7 +71,7 @@ void cannyEdgeDetection () {
  * https://tannerhelland.com/2011/10/01/grayscale-image-algorithm-vb6.html
  * 
  */
-void grayscale(int width, int height, int channels, unsigned char *image) {
+void grayscale(unsigned char *image, int width, int height, int channels) {
 
     // Allocate
     unsigned char* grayImage = (unsigned char*) malloc(width * height * sizeof(unsigned char));
@@ -131,26 +132,97 @@ for each image row in input image:
 
          set output image pixel to accumulator
 */
-void gaussianBlur (int width, int height, unsigned char *inArr) {
+void gaussianBlur (unsigned char *inArr, int width, int height) {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
 
     unsigned char** mat = convertTo2DArr(inArr, width, height);
-    unsigned char** blur = new unsigned char*[height];
+
+    unsigned char* blur = convolve(inArr, (double* [kernelSize]) kernel, kernelSize, width, height);
+
+    // unsigned char** blur = new unsigned char*[height];
+
+    // Convolve the matrix
+    // for (int i = 0; i < height; i++) {
+    //     blur[i] = new unsigned char[width];
+    //     for (int j = 0; j < width; j++) {
+    //         int accumX = 0;
+    //         int accumY = 0;
+            
+    //         for (int k = 0; k < kernelSize; k++) {
+    //             for (int l = 0; l < kernelSize; l++) {
+
+    //                 int x = i + (k - kernelSize / 2);
+    //                 int y = j + (l - kernelSize / 2);
+                    
+    //                 // Make sure we're in bounds
+    //                 if (x < 0 || y < 0) {
+    //                     x = fmax(0, x);
+    //                     y = fmax(0, y);
+    //                 } 
+                    
+    //                 if (x > height - 1 || y > width - 1) {
+    //                     x = fmin(height - 1, x);
+    //                     y = fmin(width - 1, y);
+    //                 }
+
+    //                 accumX += kernel[k][l] * mat[x][y];
+    //                 accumY += kernel[k][l] * mat[x][y];
+    //              }
+    //          }
+    //         int accum = sqrt((accumX * accumX) + (accumY * accumY));
+    //         accum = fmax(0, fmin(255, accum));
+
+    //         blur[i][j] = accum;
+    //     }
+    // }
+
+    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+}
+
+unsigned char** convertTo2DArr (unsigned char *inArr, int width, int height) {
+    // Output will be height# vectors with width# chars
+    unsigned char **outArr = new unsigned char*[height];
+
+    for (int i = 0; i < height; i++) {
+        outArr[i] = new unsigned char[width];
+        for (int j = 0; j < width; j++) {
+            outArr[i][j] = inArr[i * width + j];
+        }
+    }
+
+    return outArr;
+}
+
+unsigned char* convertTo1DArr(unsigned char **inArr, int width, int height) {
+    unsigned char* outArr = new unsigned char[width * height];
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            outArr[i * width + j] = inArr[i][j];
+        }
+    }
+
+    return outArr;
+}
+
+unsigned char* convolve(unsigned char* input, double*[] kernel, int kSize, int width, int height) {
+    unsigned char** mat = convertTo2DArr(input, width, height);    
+    unsigned char** output2D = new unsigned char*[height];
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
-        blur[i] = new unsigned char[width];
+        output2D[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accumX = 0;
             int accumY = 0;
             
-            for (int k = 0; k < kernelSize; k++) {
-                for (int l = 0; l < kernelSize; l++) {
+            for (int k = 0; k < kSize; k++) {
+                for (int l = 0; l < kSize; l++) {
 
-                    int x = i + (k - kernelSize / 2);
-                    int y = j + (l - kernelSize / 2);
+                    int x = i + (k - kSize / 2);
+                    int y = j + (l - kSize / 2);
                     
                     // Make sure we're in bounds
                     if (x < 0 || y < 0) {
@@ -170,34 +242,9 @@ void gaussianBlur (int width, int height, unsigned char *inArr) {
             int accum = sqrt((accumX * accumX) + (accumY * accumY));
             accum = fmax(0, fmin(255, accum));
 
-            blur[i][j] = accum;
-        }
-    }
-    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, convertTo1DVec(blur, width, height), width);
-}
-
-unsigned char** convertTo2DArr (unsigned char *inArr, int width, int height) {
-    // Output will be height# vectors with width# chars
-    unsigned char **outArr = new unsigned char*[height];
-
-    for (int i = 0; i < height; i++) {
-        outArr[i] = new unsigned char[width];
-        for (int j = 0; j < width; j++) {
-            outArr[i][j] = inArr[i * width + j];
+            output2D[i][j] = accum;
         }
     }
 
-    return outArr;
-}
-
-unsigned char* convertTo1DVec(unsigned char **inArr, int width, int height) {
-    unsigned char* outArr = new unsigned char[width * height];
-
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            outArr[i * width + j] = inArr[i][j];
-        }
-    }
-
-    return outArr;
+    return convertTo1DArr(output2D, width, height);
 }
