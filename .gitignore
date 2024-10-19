@@ -25,3 +25,4 @@
 **/*.cmake
 !**/mandelParallel/mandelParallel.sln
 !CMakeLists.txt
+**/.vscode/**

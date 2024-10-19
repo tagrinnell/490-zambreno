@@ -26,7 +26,8 @@ constexpr int kernelSize = 5;
 void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
 void gaussianBlur (unsigned char *inArr, int width, int height);
-void gradientSobel (unsigned char *inArr, int width, int height);
+float** gradientSobelX (unsigned char *inArr, int width, int height);
+float** gradientSobelY (unsigned char *inArr, int width, int height);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
@@ -42,7 +43,6 @@ int main () {
     cannyEdgeDetection();
     return 0;
 }
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------//
 //----------------------------------------------------------------------------------------------------------------------------------------------//
@@ -127,25 +127,6 @@ void gaussianKernel (double kernel[kernelSize][kernelSize]) {
 /**
  * Generate Gaussian Kernel, then apply the blur by convolving with the image.
  */
-/*
-Think about this
-https://www.baeldung.com/cs/convolution-matrix-multiplication
-
-for each image row in input image:
-    for each pixel in image row:
-    
-        set accumulator to zero
-
-        for each kernel row in kernel:
-            for each element in kernel row:
-
-                if element position  corresponding* to pixel position then
-                    multiply element value  corresponding* to pixel value
-                    add result to accumulator
-                endif
-
-         set output image pixel to accumulator
-*/
 void gaussianBlur (unsigned char *inArr, int width, int height) {
     double kernel[kernelSize][kernelSize];
 
@@ -157,7 +138,7 @@ void gaussianBlur (unsigned char *inArr, int width, int height) {
 
     unsigned char** blur = new unsigned char*[height];
 
-    Convolve the matrix
+    // Convolve the matrix
     for (int i = 0; i < height; i++) {
         blur[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
@@ -195,15 +176,17 @@ void gaussianBlur (unsigned char *inArr, int width, int height) {
     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
 }
 
-void gradientSobel (unsigned char *inArr, int width, int height) {
+// Need to return the Gx, Gy matrices
+
+float** gradientSobelX (unsigned char *inArr, int width, int height) {
     int sobelSize = 3;
 
-    float sobX[][] = {
+    float sobX[3][3] = {
         {-1, 0, 1},
         {-2, 0, 2},
         {-1, 0, 1}
     };
-    float sobY[][] = {
+    float sobY[3][3] = {
         {-1, -2, -1},
         {0, 0, 0},
         {1, 2, 1}
@@ -214,9 +197,10 @@ void gradientSobel (unsigned char *inArr, int width, int height) {
     unsigned char** appliedX = new unsigned char*[height];
     unsigned char** appliedY = new unsigned char*[height];
 
-    Convolve the matrix
+    // Convolve the matrix
     for (int i = 0; i < height; i++) {
-        blur[i] = new unsigned char[width];
+        appliedX[i] = new unsigned char[width];
+        appliedY[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accSobXX = 0;
             int accSobXY = 0;
@@ -240,9 +224,11 @@ void gradientSobel (unsigned char *inArr, int width, int height) {
                         y = fmin(width - 1, y);
                     }
 
-                    accumX += sobX[k][l] * mat[x][y];
-                    accumY += sobY[k][l] * mat[x][y];
-                 }
+                    accSobXX += sobX[k][l] * mat[x][y];
+                    accSobXY += sobX[k][l] * mat[x][y];
+                    accSobYX += sobY[k][l] * mat[x][y];
+                    accSobYY += sobY[k][l] * mat[x][y];
+                }
              }
             int accSobX = sqrt((accSobXX * accSobXX) + (accSobXY * accSobXY));
             int accSobY = sqrt((accSobYX * accSobYX) + (accSobYY * accSobYY));
@@ -254,7 +240,16 @@ void gradientSobel (unsigned char *inArr, int width, int height) {
         }
     }
 
-    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+    // Perform the calculation for the hypotenuse and angle
+    // G = np.hypot(Ix, Iy)
+    // Matrix multiply and store in hypot pointer passed into the function
+
+
+    // G = G / G.max() * 255
+    // theta = np.arctan2(Iy, Ix)
+    
+
+    // stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
 }
 
 
@@ -296,44 +291,47 @@ unsigned char* convertTo1DArr(unsigned char **inArr, int width, int height) {
     return outArr;
 }
 
-unsigned char* convolve(unsigned char* input, double*[] kernel, int kSize, int width, int height) {
-    unsigned char** mat = convertTo2DArr(input, width, height);    
-    unsigned char** output2D = new unsigned char*[height];
-
-    // Convolve the matrix
-    for (int i = 0; i < height; i++) {
-        output2D[i] = new unsigned char[width];
-        for (int j = 0; j < width; j++) {
-            int accumX = 0;
-            int accumY = 0;
+// TODO: Maybe look at this?
+//
+/*
+// unsigned char* convolve(unsigned char* input, double*[] kernel, int kSize, int width, int height) {
+//     unsigned char** mat = convertTo2DArr(input, width, height);    
+//     unsigned char** output2D = new unsigned char*[height];
+//
+//     // Convolve the matrix
+//     for (int i = 0; i < height; i++) {
+//         output2D[i] = new unsigned char[width];
+//         for (int j = 0; j < width; j++) {
+//             int accumX = 0;
+//             int accumY = 0;
             
-            for (int k = 0; k < kSize; k++) {
-                for (int l = 0; l < kSize; l++) {
+//             for (int k = 0; k < kSize; k++) {
+//                 for (int l = 0; l < kSize; l++) {
 
-                    int x = i + (k - kSize / 2);
-                    int y = j + (l - kSize / 2);
+//                     int x = i + (k - kSize / 2);
+//                     int y = j + (l - kSize / 2);
                     
-                    // Make sure we're in bounds
-                    if (x < 0 || y < 0) {
-                        x = fmax(0, x);
-                        y = fmax(0, y);
-                    } 
+//                     // Make sure we're in bounds
+//                     if (x < 0 || y < 0) {
+//                         x = fmax(0, x);
+//                         y = fmax(0, y);
+//                     } 
                     
-                    if (x > height - 1 || y > width - 1) {
-                        x = fmin(height - 1, x);
-                        y = fmin(width - 1, y);
-                    }
+//                     if (x > height - 1 || y > width - 1) {
+//                         x = fmin(height - 1, x);
+//                         y = fmin(width - 1, y);
+//                     }
 
-                    accumX += kernel[k][l] * mat[x][y];
-                    accumY += kernel[k][l] * mat[x][y];
-                 }
-             }
-            int accum = sqrt((accumX * accumX) + (accumY * accumY));
-            accum = fmax(0, fmin(255, accum));
+//                     accumX += kernel[k][l] * mat[x][y];
+//                     accumY += kernel[k][l] * mat[x][y];
+//                  }
+//              }
+//             int accum = sqrt((accumX * accumX) + (accumY * accumY));
+//             accum = fmax(0, fmin(255, accum));
 
-            output2D[i][j] = accum;
-        }
-    }
+//             output2D[i][j] = accum;
+//         }
+//     }
 
-    return convertTo1DArr(output2D, width, height);
-}
+//     return convertTo1DArr(output2D, width, height);
+// }*/
