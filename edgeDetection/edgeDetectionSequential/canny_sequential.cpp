@@ -26,6 +26,7 @@ constexpr int kernelSize = 5;
 void cannyEdgeDetection ();
 void gaussianKernel (double kernel[kernelSize][kernelSize]);
 void gaussianBlur (unsigned char *inArr, int width, int height);
+void gradientSobel (unsigned char *inArr, int width, int height);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
@@ -41,6 +42,13 @@ int main () {
     cannyEdgeDetection();
     return 0;
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------EDGE DETECTOR-----------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
 
 void cannyEdgeDetection () {
     // open image
@@ -64,6 +72,12 @@ void cannyEdgeDetection () {
 
     stbi_image_free(image);
 }
+
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//-----------------------------------------------------------------SUB METHODS------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
 
 /**
  * 
@@ -139,47 +153,122 @@ void gaussianBlur (unsigned char *inArr, int width, int height) {
 
     unsigned char** mat = convertTo2DArr(inArr, width, height);
 
-    unsigned char* blur = convolve(inArr, (double* [kernelSize]) kernel, kernelSize, width, height);
+    // unsigned char* blur = convolve(inArr, (double* [kernelSize]) kernel, kernelSize, width, height);
 
-    // unsigned char** blur = new unsigned char*[height];
+    unsigned char** blur = new unsigned char*[height];
 
-    // Convolve the matrix
-    // for (int i = 0; i < height; i++) {
-    //     blur[i] = new unsigned char[width];
-    //     for (int j = 0; j < width; j++) {
-    //         int accumX = 0;
-    //         int accumY = 0;
+    Convolve the matrix
+    for (int i = 0; i < height; i++) {
+        blur[i] = new unsigned char[width];
+        for (int j = 0; j < width; j++) {
+            int accumX = 0;
+            int accumY = 0;
             
-    //         for (int k = 0; k < kernelSize; k++) {
-    //             for (int l = 0; l < kernelSize; l++) {
+            for (int k = 0; k < kernelSize; k++) {
+                for (int l = 0; l < kernelSize; l++) {
 
-    //                 int x = i + (k - kernelSize / 2);
-    //                 int y = j + (l - kernelSize / 2);
+                    int x = i + (k - kernelSize / 2);
+                    int y = j + (l - kernelSize / 2);
                     
-    //                 // Make sure we're in bounds
-    //                 if (x < 0 || y < 0) {
-    //                     x = fmax(0, x);
-    //                     y = fmax(0, y);
-    //                 } 
+                    // Make sure we're in bounds
+                    if (x < 0 || y < 0) {
+                        x = fmax(0, x);
+                        y = fmax(0, y);
+                    } 
                     
-    //                 if (x > height - 1 || y > width - 1) {
-    //                     x = fmin(height - 1, x);
-    //                     y = fmin(width - 1, y);
-    //                 }
+                    if (x > height - 1 || y > width - 1) {
+                        x = fmin(height - 1, x);
+                        y = fmin(width - 1, y);
+                    }
 
-    //                 accumX += kernel[k][l] * mat[x][y];
-    //                 accumY += kernel[k][l] * mat[x][y];
-    //              }
-    //          }
-    //         int accum = sqrt((accumX * accumX) + (accumY * accumY));
-    //         accum = fmax(0, fmin(255, accum));
+                    accumX += kernel[k][l] * mat[x][y];
+                    accumY += kernel[k][l] * mat[x][y];
+                 }
+             }
+            int accum = sqrt((accumX * accumX) + (accumY * accumY));
+            accum = fmax(0, fmin(255, accum));
 
-    //         blur[i][j] = accum;
-    //     }
-    // }
+            blur[i][j] = accum;
+        }
+    }
 
     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
 }
+
+void gradientSobel (unsigned char *inArr, int width, int height) {
+    int sobelSize = 3;
+
+    float sobX[][] = {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1}
+    };
+    float sobY[][] = {
+        {-1, -2, -1},
+        {0, 0, 0},
+        {1, 2, 1}
+    };
+
+    unsigned char** mat = convertTo2DArr(inArr, width, height);
+
+    unsigned char** appliedX = new unsigned char*[height];
+    unsigned char** appliedY = new unsigned char*[height];
+
+    Convolve the matrix
+    for (int i = 0; i < height; i++) {
+        blur[i] = new unsigned char[width];
+        for (int j = 0; j < width; j++) {
+            int accSobXX = 0;
+            int accSobXY = 0;
+            int accSobYX = 0;
+            int accSobYY = 0;
+            
+            for (int k = 0; k < sobelSize; k++) {
+                for (int l = 0; l < sobelSize; l++) {
+
+                    int x = i + (k - sobelSize / 2);
+                    int y = j + (l - sobelSize / 2);
+                    
+                    // Make sure we're in bounds
+                    if (x < 0 || y < 0) {
+                        x = fmax(0, x);
+                        y = fmax(0, y);
+                    } 
+                    
+                    if (x > height - 1 || y > width - 1) {
+                        x = fmin(height - 1, x);
+                        y = fmin(width - 1, y);
+                    }
+
+                    accumX += sobX[k][l] * mat[x][y];
+                    accumY += sobY[k][l] * mat[x][y];
+                 }
+             }
+            int accSobX = sqrt((accSobXX * accSobXX) + (accSobXY * accSobXY));
+            int accSobY = sqrt((accSobYX * accSobYX) + (accSobYY * accSobYY));
+            accSobX = fmax(0, fmin(255, accSobX));
+            accSobY = fmax(0, fmin(255, accSobY));
+
+            appliedX[i][j] = accSobX;
+            appliedY[i][j] = accSobY;
+        }
+    }
+
+    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+}
+
+
+
+// https://towardsdatascience.com/canny-edge-detection-step-by-step-in-python-computer-vision-b49c3a2d8123
+
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------HELPER FUNCTIONS---------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------------------------------------------//
+
 
 unsigned char** convertTo2DArr (unsigned char *inArr, int width, int height) {
     // Output will be height# vectors with width# chars
