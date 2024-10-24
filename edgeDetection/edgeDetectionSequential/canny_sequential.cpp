@@ -142,7 +142,7 @@ void gaussianBlur (int width, int height, unsigned char *inArr) {
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
         blur[i] = new unsigned char[width];
-        for (int j = 0; j < width; j++) {
+        for (int j = 0; j < width; j++) {   
             int accumX = 0;
             int accumY = 0;
             

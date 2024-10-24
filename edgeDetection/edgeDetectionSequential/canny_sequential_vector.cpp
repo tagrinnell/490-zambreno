@@ -101,7 +101,7 @@ std::vector<unsigned char> grayscale(int width, int height, int channels, std::v
     }
 
     // Write grayscaled Image
-    stbi_write_jpg("..\\outputImages\\grayscaled.jpg", width, height, 1, reinterpret_cast<char*>(grayVec.data()), width);
+    stbi_write_jpg("..\\outputImages\\grayscaled.jpg", width, height, 1, (grayVec.data()), width);
     return grayVec;
 }
 
