@@ -20,21 +20,22 @@
 //-----------------------------------------------------GLOBAL VARS---------------------------------------------------------------------------//
 
 constexpr int kernelSize = 5;
+unsigned char *image;
+int width = 0;
+int height = 0;
 
 //---------------------------------------------------CANNY FUNCTIONS-------------------------------------------------------------------------//
 
-void cannyEdgeDetection ();
-void gaussianKernel (double kernel[kernelSize][kernelSize]);
-void gaussianBlur (unsigned char *inArr, int width, int height);
-float** gradientSobelX (unsigned char *inArr, int width, int height);
-float** gradientSobelY (unsigned char *inArr, int width, int height);
+void cannyEdgeDetection();
+void gaussianKernel(double kernel[kernelSize][kernelSize]);
+void gaussianBlur();
+void gradient();
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
-void grayscale (unsigned char *image, int width, int height, int channels);
-unsigned char** convertTo2DArr (unsigned char* inArr, int width, int height);
+void grayscale(int channels);
+unsigned char** convertTo2DArr(unsigned char* inArr, int width, int height);
 unsigned char* convertTo1DArr(unsigned char **inArr, int width, int height);
-unsigned char* convolve(unsigned char* input, double** kernel, int kernelSize, int width, int height);
 
 //-------------------------------------------------------MAIN--------------------------------------------------------------------------------//
 
@@ -52,20 +53,21 @@ int main () {
 
 void cannyEdgeDetection () {
     // open image
-    int width, height, channels;
-    unsigned char *image;
+    int channels;
     
     image = stbi_load("..\\numbat.jpeg", &width, &height, &channels, 3);
 
     std::cout << "Loaded image with a width of " << width << ", a height of " << height << " and " << channels << " channels" << std::endl; 
 
     // Grayscale the Image to 
-    grayscale(image, width, height, channels);
+    grayscale(channels);
     
     // // Noise reduction (Gaussian blur/filter)
-    gaussianBlur(image, width, height);
+    gaussianBlur();
+    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, image, width);
 
     // Gradient Calculation
+    gradient();
     // Non-maximum suppression
     // double threshold
     // Edge tracking by hysteresis
@@ -85,7 +87,7 @@ void cannyEdgeDetection () {
  * https://tannerhelland.com/2011/10/01/grayscale-image-algorithm-vb6.html
  * 
  */
-void grayscale(unsigned char *image, int width, int height, int channels) {
+void grayscale(int channels) {
 
     // Allocate
     unsigned char* grayImage = (unsigned char*) malloc(width * height * sizeof(unsigned char));
@@ -127,12 +129,12 @@ void gaussianKernel (double kernel[kernelSize][kernelSize]) {
 /**
  * Generate Gaussian Kernel, then apply the blur by convolving with the image.
  */
-void gaussianBlur (unsigned char *inArr, int width, int height) {
+void gaussianBlur () {
     double kernel[kernelSize][kernelSize];
 
     gaussianKernel(kernel);
 
-    unsigned char** mat = convertTo2DArr(inArr, width, height);
+    unsigned char** mat = convertTo2DArr(image, width, height);
 
     // unsigned char* blur = convolve(inArr, (double* [kernelSize]) kernel, kernelSize, width, height);
 
@@ -173,12 +175,12 @@ void gaussianBlur (unsigned char *inArr, int width, int height) {
         }
     }
 
-    stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+    image = convertTo1DArr(blur, width, height);
 }
 
 // Need to return the Gx, Gy matrices
 
-float** gradientSobelX (unsigned char *inArr, int width, int height) {
+void gradient () {
     int sobelSize = 3;
 
     float sobX[3][3] = {
@@ -186,21 +188,29 @@ float** gradientSobelX (unsigned char *inArr, int width, int height) {
         {-2, 0, 2},
         {-1, 0, 1}
     };
+
     float sobY[3][3] = {
         {-1, -2, -1},
         {0, 0, 0},
         {1, 2, 1}
     };
 
-    unsigned char** mat = convertTo2DArr(inArr, width, height);
+    unsigned char** mat = convertTo2DArr(image, width, height);
 
     unsigned char** appliedX = new unsigned char*[height];
     unsigned char** appliedY = new unsigned char*[height];
+
+    unsigned char** finalGradient = new unsigned char*[height];
+    unsigned char** finalAngle = new unsigned char*[height];
+
+    unsigned char max = 0;
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
         appliedX[i] = new unsigned char[width];
         appliedY[i] = new unsigned char[width];
+        finalGradient[i] = new unsigned char[width];
+        finalAngle[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accSobXX = 0;
             int accSobXY = 0;
@@ -229,7 +239,7 @@ float** gradientSobelX (unsigned char *inArr, int width, int height) {
                     accSobYX += sobY[k][l] * mat[x][y];
                     accSobYY += sobY[k][l] * mat[x][y];
                 }
-             }
+            }
             int accSobX = sqrt((accSobXX * accSobXX) + (accSobXY * accSobXY));
             int accSobY = sqrt((accSobYX * accSobYX) + (accSobYY * accSobYY));
             accSobX = fmax(0, fmin(255, accSobX));
@@ -237,19 +247,23 @@ float** gradientSobelX (unsigned char *inArr, int width, int height) {
 
             appliedX[i][j] = accSobX;
             appliedY[i][j] = accSobY;
+
+            // Hypotenuse elementwise calculation
+            finalGradient[i][j] = std::sqrt(accSobX * accSobX + accSobY * accSobY);
+            finalAngle[i][j] = std::atan2((double) accSobY, (double) accSobX);
+            max = std::fmax(max, finalGradient[i][j]);
         }
     }
 
-    // Perform the calculation for the hypotenuse and angle
-    // G = np.hypot(Ix, Iy)
-    // Matrix multiply and store in hypot pointer passed into the function
+    // Normalize the gradient
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            finalGradient[i][j] = ((unsigned char) ((double) finalGradient[i][j] / (double) max)) * 255;
+        }
+    }
 
-
-    // G = G / G.max() * 255
-    // theta = np.arctan2(Iy, Ix)
-    
-
-    // stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, blur, width);
+    image = convertTo1DArr(finalGradient, width, height);
+    stbi_write_jpg("..\\outputImages\\gradient.jpg", width, height, 1, image, width);
 }
 
 
