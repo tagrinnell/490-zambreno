@@ -29,7 +29,8 @@ int height = 0;
 void cannyEdgeDetection();
 void gaussianKernel(double kernel[kernelSize][kernelSize]);
 void gaussianBlur();
-void gradient();
+std::vector <float> gradient();
+void nonMaxSuppression(std::vector <float> angleMatrix);
 
 //---------------------------------------------------HELPER FUNCTIONS------------------------------------------------------------------------//
 
@@ -67,8 +68,11 @@ void cannyEdgeDetection () {
     stbi_write_jpg("..\\outputImages\\gaussBlur.jpg", width, height, 1, image, width);
 
     // Gradient Calculation
-    gradient();
+    std::vector <float> angleMatrix = gradient();
+    
     // Non-maximum suppression
+    nonMaxSuppression(angleMatrix);
+
     // double threshold
     // Edge tracking by hysteresis
 
@@ -180,7 +184,7 @@ void gaussianBlur () {
 
 // Need to return the Gx, Gy matrices
 
-void gradient () {
+std::vector <float> gradient () {
     int sobelSize = 3;
 
     float sobX[3][3] = {
@@ -201,7 +205,7 @@ void gradient () {
     unsigned char** appliedY = new unsigned char*[height];
 
     unsigned char** finalGradient = new unsigned char*[height];
-    unsigned char** finalAngle = new unsigned char*[height];
+    std::vector <float> finalAngle;
 
     unsigned char max = 0;
 
@@ -210,7 +214,6 @@ void gradient () {
         appliedX[i] = new unsigned char[width];
         appliedY[i] = new unsigned char[width];
         finalGradient[i] = new unsigned char[width];
-        finalAngle[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accSobXX = 0;
             int accSobXY = 0;
@@ -250,7 +253,7 @@ void gradient () {
 
             // Hypotenuse elementwise calculation
             finalGradient[i][j] = std::sqrt(accSobX * accSobX + accSobY * accSobY);
-            finalAngle[i][j] = std::atan2((double) accSobY, (double) accSobX);
+            finalAngle.push_back((std::atan2((double) accSobY, (double) accSobX)) * 180.0 / M_PI);
             max = std::fmax(max, finalGradient[i][j]);
         }
     }
@@ -258,15 +261,77 @@ void gradient () {
     // Normalize the gradient
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            finalGradient[i][j] = ((unsigned char) ((double) finalGradient[i][j] / (double) max)) * 255;
+            finalGradient[i][j] = (unsigned char) (((double) finalGradient[i][j] / (double) max)) * 255;
         }
     }
 
     image = convertTo1DArr(finalGradient, width, height);
     stbi_write_jpg("..\\outputImages\\gradient.jpg", width, height, 1, image, width);
+
+    return finalAngle;
 }
 
+void nonMaxSuppression(std::vector <float> angleVector) {
 
+    unsigned char** imageMat = convertTo2DArr(image, width, height);
+    // unsigned char** angleMat = convertTo2DArr(angleMatrix, width, height);
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            // Determine the pixels we need to look at by looking at the angelMatrix
+            float angle = angleVector.at(i * width + j);
+
+            // Simplify the cases that we're looking at by forcing the angle to be >0 degrees
+            if (angle < 0) {
+                angle += 180.0;
+            }
+            
+            // The Neighbors of the current pixel we're looking at
+            int x1 = 0;
+            int x2 = 0;    
+            int y1 = 0;    
+            int y2 = 0;
+
+            if ((angle <= 180.0 && angle >= 180.0 - 22.5) ||
+                    angle <= 11.25 && angle >= 0.0) {                     // Compare East/west Neighbors
+                x1 = fmax(i - 1, 0);
+                x1 = fmin(i + 1, width - 1);
+                y = 0;
+            } else if (angle < 135.0 + 22.5 && angle >= 135.0 - 11.25) {       // Compare
+                x = -1;
+                y = 1;
+            } else if (angle < 90.0 + 22.5 && angle >= 90.0 - 11.25) {
+                x = 0;
+                y = -1;
+            } else if (angle < 45.0 + 22.5 && angle >= 22.5) {
+                x = 1;
+                y = 1;
+            }
+
+            // Make sure we're in bounds
+            if (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0) {
+                x1 = fmax(0, x1);
+                y1 = fmax(0, y1);
+            }
+
+            if (x > height - 1 || y > width - 1) {
+                x = fmin(height - 1, x);
+                y = fmin(width - 1, y);
+            }
+
+            // Make the comparison and Suppress
+            // Make sure that we're within bounds
+            if (imageMat[i][j] < imageMat[(int)fmin(i + x, height - 1)][(int)fmin(j + y, width - 1)] 
+                || imageMat[i][j] < imageMat[(int)fmax(i - x, 0)][(int)fmax(j - y, 0)]) {
+                imageMat[i][j] = 0;
+            }
+
+        }
+    }
+
+    image = convertTo1DArr(imageMat, width, height);
+    stbi_write_jpg("..\\outputImages\\non_max_suppress.jpg", width, height, 1, image, width);
+}
 
 // https://towardsdatascience.com/canny-edge-detection-step-by-step-in-python-computer-vision-b49c3a2d8123
 
