@@ -287,42 +287,38 @@ void nonMaxSuppression(std::vector <float> angleVector) {
             }
             
             // The Neighbors of the current pixel we're looking at
-            int x1 = 0;
-            int x2 = 0;    
-            int y1 = 0;    
+            int x1 = 0;    
+            int x2 = 0;
+            int y1 = 0;
             int y2 = 0;
 
             if ((angle <= 180.0 && angle >= 180.0 - 22.5) ||
                     angle <= 11.25 && angle >= 0.0) {                     // Compare East/west Neighbors
-                x1 = fmax(i - 1, 0);
-                x1 = fmin(i + 1, width - 1);
-                y = 0;
-            } else if (angle < 135.0 + 22.5 && angle >= 135.0 - 11.25) {       // Compare
-                x = -1;
-                y = 1;
+                x1 = fmax(0, i - 1);
+                x2 = fmin(height - 1, i + 1);
+                y1 = j;
+                y2 = j;
+            } else if (angle < 135.0 + 22.5 && angle >= 135.0 - 11.25) {       // Compare NW SE neighbors
+                x1 = fmax(0, i - 1);
+                x2 = fmin(height - 1, i + 1);
+                y1 = fmax(j - 1, 0);
+                y2 = fmin(j + 1, width - 1);
             } else if (angle < 90.0 + 22.5 && angle >= 90.0 - 11.25) {
-                x = 0;
-                y = -1;
+                x1 = i;
+                x2 = i;
+                y1 = fmax(j - 1, 0);
+                y2 = fmin(j + 1, width);
             } else if (angle < 45.0 + 22.5 && angle >= 22.5) {
-                x = 1;
-                y = 1;
-            }
-
-            // Make sure we're in bounds
-            if (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0) {
-                x1 = fmax(0, x1);
-                y1 = fmax(0, y1);
-            }
-
-            if (x > height - 1 || y > width - 1) {
-                x = fmin(height - 1, x);
-                y = fmin(width - 1, y);
+                x1 = fmin(height - 1, i + 1);
+                x2 = fmax(0, i - 1);
+                y1 = fmax(j - 1, 0);
+                y2 = fmin(j + 1, width - 1);
             }
 
             // Make the comparison and Suppress
             // Make sure that we're within bounds
-            if (imageMat[i][j] < imageMat[(int)fmin(i + x, height - 1)][(int)fmin(j + y, width - 1)] 
-                || imageMat[i][j] < imageMat[(int)fmax(i - x, 0)][(int)fmax(j - y, 0)]) {
+            if (imageMat[i][j] < imageMat[x1][y1] 
+                || imageMat[i][j] < imageMat[x2][y2]) {
                 imageMat[i][j] = 0;
             }
 
