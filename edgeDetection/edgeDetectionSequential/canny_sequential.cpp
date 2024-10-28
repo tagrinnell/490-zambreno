@@ -201,9 +201,6 @@ std::vector <float> gradient () {
 
     unsigned char** mat = convertTo2DArr(image, width, height);
 
-    unsigned char** appliedX = new unsigned char*[height];
-    unsigned char** appliedY = new unsigned char*[height];
-
     unsigned char** finalGradient = new unsigned char*[height];
     std::vector <float> finalAngle;
 
@@ -211,14 +208,10 @@ std::vector <float> gradient () {
 
     // Convolve the matrix
     for (int i = 0; i < height; i++) {
-        appliedX[i] = new unsigned char[width];
-        appliedY[i] = new unsigned char[width];
         finalGradient[i] = new unsigned char[width];
         for (int j = 0; j < width; j++) {
             int accSobXX = 0;
             int accSobXY = 0;
-            int accSobYX = 0;
-            int accSobYY = 0;
             
             for (int k = 0; k < sobelSize; k++) {
                 for (int l = 0; l < sobelSize; l++) {
@@ -238,8 +231,8 @@ std::vector <float> gradient () {
                     }
 
                     accSobXX += sobX[k][l] * mat[x][y];
-                    accSobXY += sobX[k][l] * mat[x][y];
-                    accSobYX += sobY[k][l] * mat[x][y];
+                    accSobXY += sobY[k][l] * mat[x][y];
+                    accSobYX += sobX[k][l] * mat[x][y];
                     accSobYY += sobY[k][l] * mat[x][y];
                 }
             }
@@ -247,9 +240,6 @@ std::vector <float> gradient () {
             int accSobY = sqrt((accSobYX * accSobYX) + (accSobYY * accSobYY));
             accSobX = fmax(0, fmin(255, accSobX));
             accSobY = fmax(0, fmin(255, accSobY));
-
-            appliedX[i][j] = accSobX;
-            appliedY[i][j] = accSobY;
 
             // Hypotenuse elementwise calculation
             finalGradient[i][j] = std::sqrt(accSobX * accSobX + accSobY * accSobY);
